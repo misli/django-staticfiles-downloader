@@ -1,0 +1,11 @@
+*.pyc
+*.pyo
+*.egg-info
+*.swp
+*~
+/build
+/dist
+/env
+/static_root
+/.coverage
+/.tox
