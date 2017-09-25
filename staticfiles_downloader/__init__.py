@@ -12,6 +12,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import Storage
 from django.utils import six
 from django.utils.http import parse_http_date
+from django.utils.timezone import now
 from pytz import UTC
 
 try:
@@ -64,10 +65,16 @@ class DownloaderStorage(Storage):
                 )
 
     def get_modified_time(self, path):
-        response = urlopen(HeadRequest(self.url))
-        last_modified = response.headers['Last-Modified']
-        response.close()
-        return datetime.fromtimestamp(parse_http_date(last_modified), UTC)
+        response = None
+        try:
+            response = urlopen(HeadRequest(self.url))
+            last_modified = response.headers['Last-Modified']
+            return datetime.fromtimestamp(parse_http_date(last_modified), UTC)
+        except:
+            return now()
+        finally:
+            if response:
+                response.close()
 
     def __enter__(self):
         return self
