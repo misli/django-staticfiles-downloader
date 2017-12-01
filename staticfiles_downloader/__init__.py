@@ -57,7 +57,7 @@ class DownloaderStorage(Storage):
     def close(self):
         self.request.close()
         if self.hash:
-            checksum = base64.encodestring(self.hash.digest()).strip()
+            checksum = str(base64.encodestring(self.hash.digest())).strip()
             if checksum != self.checksum:
                 raise RuntimeError(
                     'Checksum {} of {} does not match: expected "{}", got "{}"'
