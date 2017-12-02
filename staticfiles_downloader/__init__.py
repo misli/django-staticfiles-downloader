@@ -57,8 +57,13 @@ class DownloaderStorage(Storage):
     def close(self):
         self.request.close()
         if self.hash:
-            checksum = str(base64.encodestring(self.hash.digest())).strip()
-            if checksum != self.checksum:
+            try:
+                # python 3
+                checksum = base64.encodebytes(self.hash.digest()).decode()
+            except AttributeError:
+                # python 2
+                checksum = base64.encodestring(self.hash.digest())
+            if checksum.strip() != self.checksum:
                 raise RuntimeError(
                     'Checksum {} of {} does not match: expected "{}", got "{}"'
                     .format(self.algorithm, self.url, self.checksum, checksum)
