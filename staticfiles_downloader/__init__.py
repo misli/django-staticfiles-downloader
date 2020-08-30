@@ -4,6 +4,7 @@ import hashlib
 import os
 from collections import defaultdict
 from datetime import datetime
+from urllib.request import Request, urlopen
 
 from django.apps import apps
 from django.conf import settings
@@ -15,13 +16,17 @@ from django.utils.http import parse_http_date
 from django.utils.timezone import now
 from pytz import UTC
 
-try:
-    from urllib.request import Request, urlopen
-except ImportError:
-    from urllib2 import Request, urlopen
+
+class GetRequest(Request):
+    def __init__(self, url, **kwargs):
+        kwargs.setdefault('headers', dict()).setdefault(
+            'User-Agent',
+            'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:80.0) Gecko/20100101 Firefox/80.0',
+        )
+        super().__init__(url, **kwargs)
 
 
-class HeadRequest(Request):
+class HeadRequest(GetRequest):
     def get_method(self):
         return 'HEAD'
 
@@ -43,7 +48,7 @@ class DownloaderStorage(Storage):
         """
         Retrieves the specified file from storage.
         """
-        self.request = urlopen(self.url)
+        self.request = urlopen(GetRequest(self.url))
         if self.algorithm:
             self.hash = hashlib.new(self.algorithm)
         return self
@@ -75,7 +80,7 @@ class DownloaderStorage(Storage):
             response = urlopen(HeadRequest(self.url))
             last_modified = response.headers['Last-Modified']
             return datetime.fromtimestamp(parse_http_date(last_modified), UTC)
-        except:
+        except Exception:
             return now()
         finally:
             if response:
@@ -132,7 +137,7 @@ class DownloaderFinder(BaseFinder):
             if isinstance(url, (list, tuple)):
                 try:
                     url, algorithm, checksum = url
-                except:
+                except ValueError:
                     raise ImproperlyConfigured(
                         'Values of "{}" must be string '
                         'urls or tuples (url, algorithm, checksum).'
