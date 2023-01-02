@@ -9,3 +9,4 @@
 /static_root
 /.coverage
 /.tox
+/Pipfile.lock
